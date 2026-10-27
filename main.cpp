@@ -1,11 +1,13 @@
 #include <iostream>
-#include "lexer.hpp"
+#include "lexer.hpp"        // برای پیدا شدن این فایل باید با  -I include  کامپایل شود
 
 
-
+// تبدیل نوع توکن به اسم قابل خواندن برای چاپ
+// enum class به طور خودکار چاپ نمی شود پس این تابع لازم است
 const char* tokenTypeName(TokenType type) {
 
     switch (type) {
+        // کلمات کلیدی
         case TokenType::KW_INT: return "KW_INT";
         case TokenType::KW_CHAR: return "KW_CHAR";
         case TokenType::KW_FLOAT: return "KW_FLOAT";
@@ -15,6 +17,7 @@ const char* tokenTypeName(TokenType type) {
         case TokenType::KW_IF: return "KW_IF";
         case TokenType::KW_RETURN: return "KW_RETURN";
 
+        // شناسه ها و ثابت ها
         case TokenType::IDENTIFIER: return "IDENTIFIER";
         case TokenType::INTEGER_LITERAL: return "INTEGER_LITERAL";
         case TokenType::BOOLEAN_LITERAL: return "BOOLEAN_LITERAL";
@@ -22,12 +25,14 @@ const char* tokenTypeName(TokenType type) {
         case TokenType::STRING_LITERAL: return "STRING_LITERAL";
         case TokenType::CHAR_LITERAL: return "CHAR_LITERAL";
 
+        // ریاضی
         case TokenType::PLUS: return "PLUS";
         case TokenType::MINUS: return "MINUS";
         case TokenType::STAR: return "STAR";
         case TokenType::SLASH: return "SLASH";
         case TokenType::PERCENT: return "PERCENT";
 
+        // جایگذاری و مقایسه
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::EQUAL_EQUAL: return "EQUAL_EQUAL";
         case TokenType::NOT_EQUAL: return "NOT_EQUAL";
@@ -36,12 +41,14 @@ const char* tokenTypeName(TokenType type) {
         case TokenType::GREATER: return "GREATER";
         case TokenType::GREATER_EQUAL: return "GREATER_EQUAL";
 
+        //منطقی و ++ و -- همممم
         case TokenType::LOGICAL_AND: return "LOGICAL_AND";
         case TokenType::LOGICAL_OR: return "LOGICAL_OR";
         case TokenType::LOGICAL_NOT: return "LOGICAL_NOT";
         case TokenType::INCREMENT: return "INCREMENT";
         case TokenType::DECREMENT: return "DECREMENT";
 
+        // علامت ها
         case TokenType::LEFT_PAREN: return "LEFT_PAREN";
         case TokenType::RIGHT_PAREN: return "RIGHT_PAREN";
         case TokenType::LEFT_BRACE: return "LEFT_BRACE";
@@ -49,6 +56,7 @@ const char* tokenTypeName(TokenType type) {
         case TokenType::COMMA: return "COMMA";
         case TokenType::SEMICOLON: return "SEMICOLON";
 
+        // ویژه
         case TokenType::END_OF_FILE: return "END_OF_FILE";
         case TokenType::INVALID: return "INVALID";
 
@@ -59,9 +67,10 @@ const char* tokenTypeName(TokenType type) {
 
 
 int main() {
-    
+    // متن آزمایشی
     Lexer lexer("= == ! != < <= > >= + ++ - -- & && | ||");
 
+    // حلقه کلاسیک: تا رسیدن به END_OF_FILE توکن بگیر و چاپ کن
     while(true) {
         Token token = lexer.nextToken();
 

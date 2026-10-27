@@ -270,8 +270,10 @@ static TokenType getKeywordType(const std::string& word) {
 
 // نکته: هر بار صدا زده شود دقیقاً یک توکن برمیگرداند.
 Token Lexer::nextToken() {
+    // رد کردن فاصله‌ها و کامنت‌ها
     while (true) {
         skipWhitespace();
+        // اگر کامنت قبلی بسته نشده بود، همین‌جا خطا گزارش بده.
         if (unterminatedComment) {
             unterminatedComment = false;
 
@@ -283,6 +285,7 @@ Token Lexer::nextToken() {
             };
         }
 
+        // اگر شروع کامنت است، آن را رد کن و دوباره حلقه؛ وگرنه حلقه تمام.
         if (currentChar() == '/' &&
             (peekChar() == '/' || peekChar() == '*')) {
                 skipComments();
@@ -292,9 +295,11 @@ Token Lexer::nextToken() {
     }
     
 
+    // محل شروع توکن را قبل از مصرف ذخیره می کنیم، برای پیام خطا
     int startLine = line;
     int startColumn = column;
 
+    // پایان ورودی
     if(currentChar() == '\0') {
         return {
             TokenType::END_OF_FILE,
@@ -305,6 +310,7 @@ Token Lexer::nextToken() {
     }
 
 
+    // اعداد
     if (currentChar() >= '0' && currentChar() <= '9') {
         std::size_t start = position;
 
@@ -345,6 +351,7 @@ Token Lexer::nextToken() {
     }
 
 
+    // شناسه / کلمه کلیدی / true, false
     if(isIdentifierStart(currentChar())) {
         std::size_t start = position;
 
@@ -354,6 +361,7 @@ Token Lexer::nextToken() {
 
         std::string word = source.substr(start, position - start);
 
+        // مقدار ثابت منطقی‌اند
         if(word == "true" || word == "false") {
             return {
                 TokenType::BOOLEAN_LITERAL,
@@ -363,6 +371,7 @@ Token Lexer::nextToken() {
             };
         }
 
+        // وگرنه کلمه کلیدی یا شناسه ی معمولی
         return {
             getKeywordType(word),
             word,
@@ -374,12 +383,11 @@ Token Lexer::nextToken() {
 
 
 
-
-
+    //  عملگر ها و علامت ها
     char c = currentChar();
-
     switch (c) {
 
+        // + یا ++
         case '+':
             advance();
             if (currentChar() == '+') {
@@ -390,6 +398,7 @@ Token Lexer::nextToken() {
             return {TokenType::PLUS, "+", startLine, startColumn};
 
 
+        // - یا --
         case '-':
             advance();
             if (currentChar() == '-') {
@@ -404,7 +413,8 @@ Token Lexer::nextToken() {
             advance();
             return {TokenType::STAR, "*", startLine, startColumn};
 
-
+        
+        // اگر // یا /* بود در مرحله‌ی ۱ رد شده و اینجا نمی‌رسد
         case '/':
             advance();
             return {TokenType::SLASH, "/", startLine, startColumn};
@@ -415,6 +425,7 @@ Token Lexer::nextToken() {
             return {TokenType::PERCENT, "%", startLine, startColumn};
 
 
+        // = یا ==
         case '=':
             advance();
             if (currentChar() == '=') {
@@ -425,6 +436,7 @@ Token Lexer::nextToken() {
             return {TokenType::ASSIGN, "=", startLine, startColumn};
 
 
+        // ! یا !=
         case '!':
             advance();
             if (currentChar() == '=') {
@@ -435,6 +447,7 @@ Token Lexer::nextToken() {
             return {TokenType::LOGICAL_NOT, "!", startLine, startColumn};
 
 
+        // < یا <=
         case '<':
             advance();
             if (currentChar() == '='){
@@ -445,6 +458,7 @@ Token Lexer::nextToken() {
             return {TokenType::LESS, "<", startLine, startColumn};
 
 
+        // > یا >=
         case '>':
             advance();
             if (currentChar() == '=') {
@@ -475,6 +489,7 @@ Token Lexer::nextToken() {
             return {TokenType::INVALID, "|", startLine, startColumn};
 
 
+        // علامت‌های تک‌کاراکتری
         case '(':
             advance();
             return {TokenType::LEFT_PAREN, "(", startLine, startColumn};
@@ -504,7 +519,8 @@ Token Lexer::nextToken() {
             advance();
             return {TokenType::SEMICOLON, ";", startLine, startColumn};
     }
-   
+
+    // کارکتر و رشته
     if (currentChar() == '\'') {
         return readChar(startLine, startColumn);
     }
