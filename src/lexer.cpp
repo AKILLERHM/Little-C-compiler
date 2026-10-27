@@ -1,12 +1,27 @@
-// lexer aka(also knows as) scanner
+// lexer aka(also knows as) scanner / tokenizer
 
 #include "lexer.hpp"
 #include <cstddef>
 #include <string>
 #include <cctype>
-#include <unordered_map>
+#include <unordered_map>        // جدول هش برای جدول کلمات کلیدی
+
+// تابع اصلی nexttoken()
+/* ایده / الگوریتم کلی :
+1) فاصله ها و کامنت ها را نخوان / بگذر.
+2) اگر به انتها رسیدی --> END_OF_FILE.
+3) با نگاه کردن به اولین کاراکتر انتخاب کند که چه توکنی است:
+    رقم     -->     عدد صحیح یا اعشاری
+    حرف یا _ / true, false      -->     شناسه / کلمه کلیدی
+    عملگر / علامت       -->     + - = ! < > & | ( ) { } , ; * / %
+    '       -->     کاراکتر ثابت
+    "       -->     رشته ثابت
+    غیر از اینها        -->     INVALID
+4) تا جای ممکن بلندترین تطابق را بگیر(maximal munch):
+        مثلا `==` یک توکن است نه دوتا */
 
 
+// متن برنامه را کپی می کند و بقیه اعضا مقدار پیش فرض می گیرند.
 Lexer::Lexer(const std::string& source): source(source){}
 
 // کاراکتر فعلی را برمی گرداند. اگر به انتهای ورودی رسیده باشد  `\0` برمی گراداند.
@@ -29,10 +44,10 @@ char Lexer::peekChar() const {
 }
 
 
-// یک کاراکتر جاو می رود و شماره خط و ستون رو بروزرسانی میکند.
+// یک کاراکتر جلو می رود و شماره خط و ستون رو بروزرسانی میکند.
 void Lexer::advance() {
     if (position >= source.size()) {
-        return;
+        return;     // در انتها دیگر جلو نمی رویم
     }
 
     if (source[position] == '\n') {
@@ -53,7 +68,7 @@ void Lexer::skipWhitespace() {
     while (currentChar() == ' '  ||
            currentChar() == '\t' ||
            currentChar() == '\n' ||
-           currentChar() == '\r') {
+           currentChar() == '\r') {     // \r هم لحاظ شده تا فایل های ویندوزی مشکل نداشته باشند
             advance();
         }
 }
@@ -62,7 +77,7 @@ void Lexer::skipWhitespace() {
 void Lexer::skipComments() {
     // for single-line comment: //  | برای کامنت های خطی
     if (currentChar() == '/' && peekChar() == '/') {
-        while (currentChar() != '\n' &&
+        while (currentChar() != '\n' &&     // تا رسیئن به پایان خط همه چیز را رد می کند
                currentChar() != '\0') {
                 advance();
                }
@@ -75,7 +90,7 @@ void Lexer::skipComments() {
         advance(); // *
 
         while (currentChar() != '\0') {
-            if (currentChar() == '*' && peekChar() == '/') {
+            if (currentChar() == '*' && peekChar() == '/') {        // پیدا کردن پایان کامنت چند خطی
                 advance(); // *
                 advance(); // /
                 return;
@@ -89,13 +104,13 @@ void Lexer::skipComments() {
 
 
 Token Lexer::readChar(int startLine, int startColumn) {
-    advance(); // consume opening singlw quote
+    advance(); // consume opening single quote | گرفتن کوتیشن باز
 
     if (currentChar() == '\0' ||
         currentChar() == '\n' ||
         currentChar() == '\'') {
         if (currentChar() == '\''){
-            advance();
+            advance();      // کوتیشن بسته '' را هم میگیرم تا خطا تکرار نشود
         }
 
         return {
@@ -106,7 +121,7 @@ Token Lexer::readChar(int startLine, int startColumn) {
         };
     }
 
-    std::size_t start = position;
+    std::size_t start = position;       // شروع محتوا بعد از کوتیشن
 
     // raed one character or one escape sequence
     if (currentChar() == '\\') {
@@ -124,6 +139,7 @@ Token Lexer::readChar(int startLine, int startColumn) {
 
     advance();
 
+    // اگر بعد از یک کاراکتر، کوتیشن بسته نیامد --> چند کاراکتر یا بسته‌نشده.
     if (currentChar() != '\'') {
         while (currentChar() != '\'' &&
                currentChar() != '\0' &&
@@ -143,7 +159,7 @@ Token Lexer::readChar(int startLine, int startColumn) {
     }
 
     std::string value = source.substr(start, position - start);
-    advance(); // consume closing single quote
+    advance(); // consume closing single quote | گرفتن کوتیشن بسته
 
     return {
         TokenType::CHAR_LITERAL,
@@ -155,7 +171,7 @@ Token Lexer::readChar(int startLine, int startColumn) {
 
 
 Token Lexer::readString(int startLine, int startColumn) {
-    advance(); // consume opening quete
+    advance(); // consume opening quete | گرفتن " باز
 
     std::size_t start = position;
 
@@ -168,6 +184,7 @@ Token Lexer::readString(int startLine, int startColumn) {
             advance();
            }
 
+           // اگر حلقه به خاطر پایان خط / فایل تمام شد (نه بخاطر ") --> رشته بسته نشده
            if (currentChar() != '"') {
             return {
                 TokenType::INVALID,
@@ -179,7 +196,7 @@ Token Lexer::readString(int startLine, int startColumn) {
 
            std::string value = source.substr(start, position - start);
 
-           advance(); // consume closing quote
+           advance(); // consume closing quote | گرفتن " بسته
 
            return {
             TokenType::STRING_LITERAL,
@@ -189,6 +206,11 @@ Token Lexer::readString(int startLine, int startColumn) {
            };
 }
 
+
+
+/* شروع : حرف انگلیسی یا
+ادامه: حرف یا _ یا رقم
+(static یعنی فقط در همین فایل دیده می‌شوند) */
 
 /* چرا دو تابع جدا؟
 چون `age42` معتبر است اما 
@@ -208,9 +230,11 @@ static bool isIdentifierPart(char c) {
 }
 
 
-
+// جدول کلمات کلیدی
 static TokenType getKeywordType(const std::string& word) {
+    // unordered_map = میانگین سرعت جستجو --> جدول هش O(1)
     static const std::unordered_map<std::string, TokenType> keywords = {
+        // انواع داده
         {"int", TokenType::KW_INT},
         {"char", TokenType::KW_CHAR},
         {"float", TokenType::KW_FLOAT},
@@ -222,6 +246,7 @@ static TokenType getKeywordType(const std::string& word) {
         {"void", TokenType::KW_VOID},
         {"bool", TokenType::KW_BOOL},
 
+        // کنترل جریان
         {"if", TokenType::KW_IF},
         {"else", TokenType::KW_ELSE},
         {"while", TokenType::KW_WHILE},
@@ -243,7 +268,7 @@ static TokenType getKeywordType(const std::string& word) {
     return TokenType::IDENTIFIER;
 }
 
-
+// نکته: هر بار صدا زده شود دقیقاً یک توکن برمیگرداند.
 Token Lexer::nextToken() {
     while (true) {
         skipWhitespace();
