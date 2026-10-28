@@ -30,6 +30,7 @@ int main() {
     assert(token.type == TokenType::END_OF_FILE);
 
 
+
     Lexer operatorsLexer("= == ! != < <= > >= + ++ - -- & && | ||");
 
     Token expectedOperators[] = {
@@ -66,7 +67,8 @@ int main() {
     assert(operatorsLexer.nextToken().type == TokenType::END_OF_FILE);
 
 
-    Lexer KeywordsLexer("int integer if ifx return returnValue true false");
+
+    Lexer keywordsLexer("int integer if ifx return returnValue true false");
 
     TokenType expectedTypes[] = {
 
@@ -89,14 +91,15 @@ int main() {
 
     for (int i = 0; i < 8; ++i) {
 
-        Token token = KeywordsLexer.nextToken();
+        Token token = keywordsLexer.nextToken();
 
         assert(token.type == expectedTypes[i]);
         assert(token.lexeme == expectedLexemes[i]);
 
     }
 
-    assert(KeywordsLexer.nextToken().type == TokenType::END_OF_FILE);
+    assert(keywordsLexer.nextToken().type == TokenType::END_OF_FILE);
+
 
 
     Lexer numbersLexer("123 0 3.14 0.5 42.0");
@@ -127,6 +130,7 @@ int main() {
     }
 
     assert(numbersLexer.nextToken().type == TokenType::END_OF_FILE);
+
 
 
     Lexer positionLexer("int x;\n  return 42;\nfloat y;");
@@ -162,7 +166,193 @@ int main() {
 
 
 
+    Lexer commentLexer("int x; // this is a comment\n"
+                       "/* multi-line\n"
+                       "   comment */ return 42;");
 
-    std::cout << "All lexer tests passed!\n";
+    Token expectedComments[] = {
+
+        {TokenType::KW_INT, "int", 1, 1},
+        {TokenType::IDENTIFIER, "x", 1, 5},
+        {TokenType::SEMICOLON, ";", 1, 6},
+
+        {TokenType::KW_RETURN, "return", 3, 15},
+        {TokenType::INTEGER_LITERAL, "42", 3, 22},
+        {TokenType::SEMICOLON, ";", 3, 24},
+
+    };
+
+    for (const Token& expected: expectedComments) {
+
+        Token actual = commentLexer.nextToken();
+
+        assert(actual.type == expected.type);
+        assert(actual.lexeme == expected.lexeme);
+        assert(actual.line == expected.line);
+        assert(actual.column == expected.column);
+
+    }
+
+    assert(commentLexer.nextToken().type == TokenType::END_OF_FILE);
+
+
+
+    Lexer tabsLexer("\tint\tx;");
+
+    Token tabInt = tabsLexer.nextToken();
+    assert(tabInt.type == TokenType::KW_INT);
+    assert(tabInt.lexeme == "int");
+    assert(tabInt.column == 2);
+
+    Token tabX = tabsLexer.nextToken();
+    assert(tabX.type == TokenType::IDENTIFIER);
+    assert(tabX.lexeme == "x");
+    assert(tabX.column == 6);
+
+    Token tabSemicolon = tabsLexer.nextToken();
+    assert(tabSemicolon.type == TokenType::SEMICOLON);
+    assert(tabSemicolon.column == 7);
+
+    assert(tabsLexer.nextToken().type == TokenType::END_OF_FILE);
+
+
+    Lexer unterminatedCommentLexer("int x; /* never closed");
+
+    Token first = unterminatedCommentLexer.nextToken();
+    assert(first.type == TokenType::KW_INT);
+
+    Token second = unterminatedCommentLexer.nextToken();
+    assert(second.type == TokenType::IDENTIFIER);
+
+    Token third = unterminatedCommentLexer.nextToken();
+    assert(third.type == TokenType::SEMICOLON);
+
+    Token error = unterminatedCommentLexer.nextToken();
+    assert(error.type == TokenType::INVALID);
+    assert(error.lexeme == "UNTERMINATED_COMMENT");
+
+
+
+    Lexer invalidStringLexer("\"hello");
+    Token stringError = invalidStringLexer.nextToken();
+
+    assert(stringError.type == TokenType::INVALID);
+    assert(stringError.lexeme == "UNTERMINATED_STRING");
+
+
+
+    Lexer invalidCharLexer("'A");
+    Token charError = invalidCharLexer.nextToken();
+
+    assert(charError.type == TokenType::INVALID);
+    assert(charError.lexeme == "INVALID_CHAR_LITERAL");
+
+
+
+    Lexer boundaryLexer("123abc");
+
+    Token first1 = boundaryLexer.nextToken();
+    Token second2 = boundaryLexer.nextToken();
+
+    assert(first1.type == TokenType::INTEGER_LITERAL);
+    assert(first1.lexeme == "123");
+
+    assert(second2.type == TokenType::IDENTIFIER);
+    assert(second2.lexeme == "abc");
+
+    assert(boundaryLexer.nextToken().type == TokenType::END_OF_FILE);
+
+
+
+    Lexer boundaryNumbersLexer("42. 1.2.3");
+
+    Token n1 = boundaryNumbersLexer.nextToken();
+    assert(n1.type == TokenType::INTEGER_LITERAL);
+    assert(n1.lexeme == "42");
+
+    Token n2 = boundaryNumbersLexer.nextToken();
+    assert(n2.type == TokenType::INVALID);
+    assert(n2.lexeme ==".");
+
+    Token n3 = boundaryNumbersLexer.nextToken();
+    assert(n3.type == TokenType::FLOAT_LITERAL);
+    assert(n3.lexeme == "1.2");
+
+    Token n4 = boundaryNumbersLexer.nextToken();
+    assert(n4.type == TokenType::INVALID);
+    assert(n4.lexeme == ".");
+
+    Token n5 = boundaryNumbersLexer.nextToken();
+    assert(n5.type == TokenType::INTEGER_LITERAL);
+    assert(n5.lexeme == "3");
+
+    assert(boundaryNumbersLexer.nextToken().type == TokenType::END_OF_FILE);
+
+
+
+    Lexer invalidOperatorsLexer("& | @");
+
+    Token op1 = invalidOperatorsLexer.nextToken();
+    assert(op1.type == TokenType::INVALID);
+    assert(op1.lexeme == "&");
+
+    Token op2 = invalidOperatorsLexer.nextToken();
+    assert(op2.type == TokenType::INVALID);
+    assert(op2.lexeme =="|");
+
+    Token op3 = invalidOperatorsLexer.nextToken();
+    assert(op3.type == TokenType::INVALID);
+    assert(op3.lexeme == "@");
+
+    assert(invalidOperatorsLexer.nextToken().type == TokenType::END_OF_FILE);
+
+
+
+    Lexer recoverLexer("@ int x;");
+
+    Token r1 = recoverLexer.nextToken();
+    assert(r1.type == TokenType::INVALID);
+    assert(r1.lexeme == "@");
+
+    Token r2 = recoverLexer.nextToken();
+    assert(r2.type == TokenType::KW_INT);
+    assert(r2.lexeme == "int");
+
+    Token r3 = recoverLexer.nextToken();
+    assert(r3.type == TokenType::IDENTIFIER);
+    assert(r3.lexeme == "x");
+
+    Token r4 = recoverLexer.nextToken();
+    assert(r4.type == TokenType::SEMICOLON);
+    assert(r4.lexeme == ";");
+
+    assert(recoverLexer.nextToken().type == TokenType::END_OF_FILE);
+
+
+
+    // empty input |  ورودی خالی
+    Lexer emptyLexer("");
+
+    Token emptyToken = emptyLexer.nextToken();
+    assert(emptyToken.type == TokenType::END_OF_FILE);
+
+    //whitespace-only input |  ورودی با تنها اسپییس ها
+    Lexer whitespaceLexer("   \t\n  \r");
+
+    Token whitespaceToken = whitespaceLexer.nextToken();
+    assert(whitespaceToken.type == TokenType::END_OF_FILE);
+
+    // comment-only input | ورودی تنها کامنت
+    Lexer commentOnlyLexer("// just a comment\n"
+                           "/* another comment */");
+
+    Token commenttoken = commentOnlyLexer.nextToken();
+    assert(commenttoken.type == TokenType::END_OF_FILE);
+
+    
+
+
+
+    std::cout << "All lexer tests passed!\n" << std::endl;
     return 0;
 }
