@@ -120,7 +120,7 @@ The following C-like program demonstrates several constructs recognized by the l
 
 کد شبه‌C زیر چند نمونه از ساختارهایی را نشان می‌دهد که Lexer آن‌ها را به‌عنوان توکن شناسایی می‌کند.
 
-`
+```
 
 int main() {
     char c = 'A';
@@ -133,6 +133,6 @@ int main() {
     return 0;
 }
 
-`
+```
 
 Lexer در این ورودی کلمات کلیدی، شناسه‌ها، مقادیر ثابت، عملگرها و علائم نگارشی را شناسایی می‌کند.
