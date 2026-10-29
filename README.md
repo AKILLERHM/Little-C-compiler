@@ -123,6 +123,7 @@ The following C-like program demonstrates several constructs recognized by the l
 ```
 
 int main() {
+
     char c = 'A';
     float x = 3.14;
 
@@ -131,6 +132,7 @@ int main() {
     }
 
     return 0;
+    
 }
 
 ```
