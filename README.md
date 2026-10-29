@@ -1,5 +1,6 @@
 # Little-C-compiler
 a Mini C compiler implemented in `c++` for my Compiler Design course.
+
 یک پروژه با موضوع ساخت یک کامپایلر کوچک زیرمجموعه زبان برنامه نویسی C، با زبان C++ توسعه داده میشود.
 
 #### 1. Keywords and Identifiers | کلمات کلیدی و شناسه ها
@@ -70,14 +71,21 @@ The tests cover token recognition, operators, keywords, literals, comments, sour
 ### Build and Run | کامپایل و اجرا
 
 Compile the main program:
+
 برنامهٔ اصلی را کامپایل کنید:
+
 ` g++ main.cpp src/lexer.cpp -I include -o main.exe `
 
+
 Run the program in Windows PowerShell:
+
 برنامه را در Windows PowerShell اجرا کنید:
+
 ` .\main.exe `
 
+
 The program prints recognized tokens, their types, and their source positions.
+
 برنامه توکن‌های شناسایی‌شده، نوع هر توکن و موقعیت آن در کد را نمایش می‌دهد.
 
 
@@ -85,15 +93,23 @@ The program prints recognized tokens, their types, and their source positions.
 ### Run Tests | اجرای تست‌ها
 
 Compile the test suite:
+
 تست‌ها را کامپایل کنید:
+
 ` g++ tests/lexer_tests.cpp src/lexer.cpp -I include -o lexer_tests.exe `
 
+
 Run the tests in Windows PowerShell:
+
 تست‌ها را در Windows PowerShell اجرا کنید:
+
 ` .\lexer_tests.exe `
 
+
 A successful test run prints:
+
 در صورت موفقیت‌آمیز بودن تست‌ها، پیام زیر نمایش داده می‌شود:
+
 ` All lexer tests passed! `
 
 
@@ -101,9 +117,11 @@ A successful test run prints:
 ### Example | نمونه کد
 
 The following C-like program demonstrates several constructs recognized by the lexer.
+
 کد شبه‌C زیر چند نمونه از ساختارهایی را نشان می‌دهد که Lexer آن‌ها را به‌عنوان توکن شناسایی می‌کند.
 
 `
+
 int main() {
     char c = 'A';
     float x = 3.14;
@@ -114,6 +132,7 @@ int main() {
 
     return 0;
 }
+
 `
 
 Lexer در این ورودی کلمات کلیدی، شناسه‌ها، مقادیر ثابت، عملگرها و علائم نگارشی را شناسایی می‌کند.
